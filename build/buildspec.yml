@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+    install:
+        runtime-versions:
+            nodejs: 22
+        commands:
+            - echo Installing dependencies...
+            - npm install
+    build:
+        commands:
+            - echo Building Lambda functions...
+            - zip -r ecommerce-api-code.zip .
+artifacts:
+    files:
+        - ecommerce-api-code.zip
+    discard-paths: yes
