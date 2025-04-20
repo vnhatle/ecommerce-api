@@ -1,18 +1,18 @@
-const dynamoDbServicenfig = require("../services/dynamoDbService");
+const dynamoDbService = require("../services/dynamoDbService");
 
 exports.handler = async (event) => {
     try {
-        const data = await dynamoDbServicenfig.getAllProducts();
+        const data = await dynamoDbService.getAllProducts();
 
         return {
             statusCode: 200,
-            body: JSON.stringify(data.Items),
+            body: data,
         };
     } catch (error) {
         console.error("Error retrieving products:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message }),
+            body: { error: error.message },
         };
     }
 };

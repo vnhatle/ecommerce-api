@@ -9,15 +9,15 @@ exports.handler = async (event) => {
 
         return {
             statusCode: 200,
-            body: JSON.stringify({
+            body: {
                 message: "Product added to cart successfully",
-            }),
+            },
         };
     } catch (error) {
         console.error("Error adding product to cart:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message }),
+            body: { error: error.message },
         };
     }
 };

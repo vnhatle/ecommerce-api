@@ -2,9 +2,9 @@ const dynamoDbService = require("../services/dynamoDbService");
 const snsService = require("../services/snsService");
 
 exports.handler = async (event) => {
-    const { email, cart, shippingAddress, paymentMethod } = JSON.parse(
-        event.body
-    );
+    const { cart, shippingAddress, paymentMethod } = JSON.parse(event.body);
+
+    const { email } = event.requestContext.authorizer.claims;
 
     try {
         await dynamoDbService.placeOrder(
@@ -20,16 +20,16 @@ exports.handler = async (event) => {
 
         return {
             statusCode: 200,
-            body: JSON.stringify({
+            body: {
                 message: "Order placed successfully",
                 orderId,
-            }),
+            },
         };
     } catch (error) {
         console.error("Error placing order:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message }),
+            body: { error: error.message },
         };
     }
 };
