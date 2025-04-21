@@ -1,3 +1,4 @@
+const { unmarshall } = require("@aws-sdk/util-dynamodb");
 const dynamoDbService = require("../services/dynamoDbService");
 
 exports.handler = async (event) => {
@@ -6,7 +7,7 @@ exports.handler = async (event) => {
 
         return {
             statusCode: 200,
-            body: data,
+            body: unmarshall(data),
         };
     } catch (error) {
         console.error("Error retrieving products:", error);

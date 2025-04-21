@@ -2,15 +2,17 @@ const dynamoDbService = require("../services/dynamoDbService");
 const snsService = require("../services/snsService");
 
 exports.handler = async (event) => {
-    const { cart, shippingAddress, paymentMethod } = JSON.parse(event.body);
+    const { cart, shippingDetails, paymentMethod } = event.body;
 
-    const { email } = event.requestContext.authorizer.claims;
+    // const { email } = event.requestContext.authorizer.claims;
+    const email = "lenhatdev@gmail.com";
 
     try {
+        const orderId = `ORDER-${Date.now()}`;
         await dynamoDbService.placeOrder(
             email,
             cart,
-            shippingAddress,
+            shippingDetails,
             paymentMethod
         );
 

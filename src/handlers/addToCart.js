@@ -1,8 +1,9 @@
 const dynamoDbService = require("../services/dynamoDbService");
 
 exports.handler = async (event) => {
-    const { productId, quantity } = JSON.parse(event.body);
-    const { email } = event.requestContext.authorizer.claims;
+    const { productId, quantity } = event.body;
+    // const { email } = event.requestContext.authorizer.claims;
+    const email = "lenhatdev@gmail.com";
 
     try {
         await dynamoDbService.updateCart(email, productId, quantity);

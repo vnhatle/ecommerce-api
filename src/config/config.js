@@ -2,8 +2,9 @@ module.exports = {
     REGION: "us-east-1",
 
     PRODUCTS_TABLE: "Products",
-    CART_TABLE: "Carts",
-    ORDER_TABLE: "Orders",
+    USERS_TABLE: "Users",
+    CART_ITEM_TABLE: "CartItem",
+    ORDER_TABLE: "Order",
 
     SNS_TOPIC_ARN: "arn:aws:sns:us-east-1:124931565609:OrderNotification",
 

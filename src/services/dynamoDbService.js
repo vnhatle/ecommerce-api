@@ -1,10 +1,17 @@
-const { DynamoDBClient, ScanCommand } = require("@aws-sdk/client-dynamodb");
+const {
+    DynamoDBClient,
+    ScanCommand,
+    GetItemCommand,
+    PutItemCommand,
+} = require("@aws-sdk/client-dynamodb");
+const { marshall } = require("@aws-sdk/util-dynamodb");
 const config = require("../config/config");
 
 const ddbClient = new DynamoDBClient({ region: config.REGION });
 
 const PRODUCTS_TABLE = config.PRODUCTS_TABLE;
-const CART_TABLE = config.CART_TABLE;
+const CART_ITEM_TABLE = config.CART_ITEM_TABLE;
+const USERS_TABLE = config.USERS_TABLE;
 const ORDER_TABLE = config.ORDER_TABLE;
 
 async function getAllProducts() {
@@ -16,10 +23,26 @@ async function getAllProducts() {
     return data.Items;
 }
 
+async function findProductById(productId) {
+    const params = {
+        TableName: PRODUCTS_TABLE,
+        Key: { id: { S: productId } },
+    };
+
+    const productData = await ddbClient.send(new GetItemCommand(params));
+    return productData.Item;
+}
+
 async function updateCart(email, productId, quantity) {
     try {
+        const product = await findProductById(productId);
+
+        if (!product) {
+            throw new Error("Product is not exist");
+        }
+
         const getParams = {
-            TableName: CART_TABLE,
+            TableName: CART_ITEM_TABLE,
             Key: { email: { S: email } },
         };
 
@@ -27,9 +50,9 @@ async function updateCart(email, productId, quantity) {
 
         let updatedCart;
 
-        if (cartData.Item && cartData.Item.products) {
+        if (cartData && cartData.Item && cartData.Item.products) {
             const existingProductIndex = cartData.Item.products.L.findIndex(
-                (product) => product.M.productId.S === productId
+                (product) => product.M.product.M.productId.S === productId
             );
 
             if (existingProductIndex > -1) {
@@ -49,20 +72,22 @@ async function updateCart(email, productId, quantity) {
             }
         } else {
             updatedCart = {
-                email,
-                products: [
-                    {
-                        M: {
-                            productId: { S: productId },
-                            quantity: { N: quantity.toString() },
+                email: { S: email },
+                products: {
+                    L: [
+                        {
+                            M: {
+                                productId: { S: productId },
+                                quantity: { N: quantity.toString() },
+                            },
                         },
-                    },
-                ],
+                    ],
+                },
             };
         }
 
         const putParams = {
-            TableName: CART_TABLE,
+            TableName: CART_ITEM_TABLE,
             Item: updatedCart || cartData.Item,
         };
 
@@ -72,18 +97,37 @@ async function updateCart(email, productId, quantity) {
     }
 }
 
-async function placeOrder(email, cart, shippingAddress, paymentMethod) {
+async function placeOrder(
+    orderId,
+    email,
+    cart,
+    shippingDetails,
+    paymentMethod
+) {
     try {
-        const orderId = `ORDER-${Date.now()}`;
-        const order = {
-            orderId,
-            email,
-            items: cart.products,
-            shippingAddress,
-            paymentMethod,
-            status: "Processing",
+        const totalPrice = cart.products.reduce(
+            (acc, product) => acc + product.price * quantity,
+            0
+        );
+
+        const products = cart.products.map((p) => {
+            return {
+                productId: { S: p.productId },
+                quantity: { N: p.quantity },
+            };
+        });
+
+        shippingDetails = marshall(shippingDetails);
+
+        const order = marshall({
+            orderId: orderId,
+            email: email,
+            items: products,
+            total: totalPrice,
+            shippingDetails: shippingDetails,
+            paymentMethod: paymentMethod,
             createdAt: new Date().toISOString(),
-        };
+        });
 
         const orderParams = {
             TableName: ORDER_TABLE,
@@ -98,6 +142,7 @@ async function placeOrder(email, cart, shippingAddress, paymentMethod) {
 
 module.exports = {
     getAllProducts,
+    findProductById,
     updateCart,
     placeOrder,
 };
